@@ -1,0 +1,7 @@
+pymc
+pytensor
+numpy
+scipy
+matplotlib
+jupyter
+pandas

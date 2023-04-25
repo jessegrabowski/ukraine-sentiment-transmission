@@ -1,0 +1,1 @@
+from ukraine_sentiment.graphing.graphing import config_matplotlib
