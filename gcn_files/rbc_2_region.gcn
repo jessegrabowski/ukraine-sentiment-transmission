@@ -1,0 +1,189 @@
+
+block HOUSEHOLD
+{
+	definitions
+	{
+		u_A[] = C_A[] ^ (1 - sigma_C) / (1 - sigma_C) -
+			    L_A[] ^ (1 + sigma_L) / (1 + sigma_L);
+
+		u_B[] = C_B[] ^ (1 - sigma_C) / (1 - sigma_C) -
+				L_B[] ^ (1 + sigma_L) / (1 + sigma_L);
+
+		
+		income[] = omega[] * (r_A[] * K_A[-1] + w_A[] * L_A[] + Div_A_i[] + Div_A[]) + 
+				   (1 - omega[]) * (r_B[] * K_B[-1] + w_B[] * L_B[] + Div_B_i[] + Div_B[]);
+ 
+		Phi[] = (psi_1 / 2 * (omega[] / psi_omega - 1) ^ 2 +
+				 psi_2 / 2 * (omega[] / omega[-1] - 1) ^ 2 * omega[]);
+	};
+
+
+	controls
+	{
+		C_A[], C_B[], L_A[], L_B[], I_A[], I_B[], K_A[], K_B[], omega[];
+	};
+
+	objective
+	{
+		U[] = omega[] * u_A[] + (1 - omega[]) * u_B[] + beta * E[][U[1]];
+	};
+
+	constraints
+	{
+		omega[] * P_A[] * (C_A[] + I_A[]) + (1 - omega[]) * P_B[] * (C_B[] + I_B[])
+			 = income[] - Phi[]: lambda[];
+
+		K_A[] = (1 - delta) * K_A[-1] + I_A[]: q_A[];
+		K_B[] = (1 - delta) * K_B[-1] + I_B[]: q_B[];
+	};
+
+	calibration
+	{
+		beta = 0.95;
+		delta = 0.035;
+		sigma_C = 1.5;
+		sigma_L = 2.0;
+		psi_1 = 0.7;
+		psi_2 = 1.2;
+		psi_omega = 0.5;
+
+		alpha_C = 0.5;
+		psi_C = 0.6;
+	};
+};
+
+block HOME_PRODUCTION_REGION_A
+{
+	objective
+	{
+		TC_A[] = -(P_A_i[] * Y_AA[] + P_B_i[] * Y_AB[]);
+	};
+
+	controls
+	{
+		Y_AA[], Y_AB[];
+	};	
+
+	constraints
+	{
+		Y_A[] = (alpha_A ^ (1 / psi_A) * Y_AA[] ^ ((psi_A - 1) / psi_A) + 
+			(1 - alpha_A) ^(1 / psi_A) * Y_AB[] ^ ((psi_A - 1) / psi_A)) ^
+				(psi_A / (psi_A - 1)): P_A[];
+	};
+
+	identities
+	{
+		Div_A[] = P_A[] * Y_A[] + TC_A[];
+	};
+
+	calibration
+	{
+		alpha_A = 0.5;
+		psi_A = 0.33;
+	};
+};
+
+block HOME_PRODUCTION_REGION_B
+{
+	controls
+	{
+		Y_BA[], Y_BB[];
+	};
+
+	objective
+	{
+		TC_B[] = -(P_A_i[] * Y_BA[] + P_B_i[] * Y_BB[]);
+	};
+
+	constraints
+	{
+		Y_B[] = (alpha_B ^ (1 / psi_B) * Y_BA[] ^ ((psi_B - 1) / psi_B) + 
+			(1 - alpha_B)^ (1 / psi_B) * Y_BB[] ^ ((psi_B - 1) / psi_B)) ^
+				(psi_B / (psi_B - 1)): P_B[];
+	};
+
+	identities
+	{
+		Div_B[] = P_B[] * Y_B[] + TC_B[];
+	};
+	
+	calibration
+	{
+		alpha_B = 0.5;
+		psi_B = 0.33;
+	};
+};
+
+
+block FIRM_A
+{
+	objective
+	{
+		TC_A_i[] = -(r_A[] * K_A[-1] + w_A[] * L_A[]);
+	};
+
+	controls
+	{
+		L_A[], K_A[-1];
+	};
+
+	constraints
+	{
+		Y_A_i[] = Z_A[] * K_A[-1] ^ alpha_Ai * L_A[] ^ (1 - alpha_Ai) : P_A_i[];
+	};
+
+	identities
+	{
+		log(Z_A[]) = rho_ZA * log(Z_A[-1]) + epsilon_ZA[];
+		Div_A_i[] = Y_A_i[] * P_A_i[] + TC_A_i[];
+		Y_A_i[] = Y_AA[] + Y_BA[];
+	};
+
+	shocks
+	{
+		epsilon_ZA[];
+	};
+
+	calibration
+	{
+		alpha_Ai = 0.33;
+		rho_ZA = 0.95;
+	};
+};
+
+block FIRM_B
+{
+	objective
+	{
+		TC_B_i[] = -(r_B[] * K_B[-1] + w_B[] * L_B[]);
+	};
+
+	controls
+	{
+		L_B[], K_B[-1];
+	};
+
+	constraints
+	{
+		Y_B_i[] = Z_B[] * K_B[-1] ^ alpha_Bi * L_B[] ^ (1 - alpha_Bi) : P_B_i[];
+	};
+
+	identities
+	{
+		log(Z_B[]) = rho_ZB * log(Z_B[-1]) + epsilon_ZB[];
+		Div_B_i[] = Y_B_i[] * P_B[] + TC_B_i[];
+		Y_B_i[] = Y_AB[] + Y_BB[];
+	};
+
+	shocks
+	{
+		epsilon_ZB[];
+	};
+
+	calibration
+	{
+		alpha_Bi = 0.33;
+		rho_ZB = 0.95;
+	};
+};
+

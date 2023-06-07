@@ -1,0 +1,100 @@
+block FIRST_ORDER_CONDITIONS
+{
+	definitions
+	{
+		u_A[] = C_A[] ^ (1 - sigma_C) / (1 - sigma_C) - Theta * L_A[] ^ (1 + sigma_L) / (1 + sigma_L);
+		u_B[] = C_B[] ^ (1 - sigma_C) / (1 - sigma_C) - Theta * L_B[] ^ (1 + sigma_L) / (1 + sigma_L);
+
+		lambda[] = omega[] * C_A[] ^ (-sigma_C) / P_A[];
+
+	};
+	identities
+	{
+		# Labor supply A
+		C_A[] ^ sigma_C * L_A[] ^ sigma_L = w_A[] / Theta / P_A[];
+
+		# Labor supply B
+		C_B[] ^ sigma_C * L_B[] ^ sigma_L = w_B[] / Theta / P_B[];
+
+		# Euler A
+		E[][omega[] / omega[1] * (C_A[1] / C_A[]) ^ sigma_C] = beta * ((1 - delta) + E[][r_A[1] / P_A[1]]);
+
+		# Euler B
+		E[][(1 - omega[]) / (1 - omega[1]) * (C_B[1] / C_B[]) ^ sigma_C] =
+			 beta * ((1 - delta) + E[][r_B[1] / P_B[1]]);
+
+		# Capital A
+		K_A[] = (1 - delta) * K_A[-1] + I_A[];
+
+		# Capital B
+		K_B[] = (1 - delta) * K_B[-1] + I_B[];
+
+		# Euler Omega
+		u_A[] - u_B[] + 
+		(omega[] * C_A[] ^ (-sigma_C) / P_A[]) * (
+			phi_1 / psi_omega * (omega[] / psi_omega - 1) + 
+			phi_2 / 2 * (omega[] / omega[-1] - 1) ^ 2 + phi_2 / omega[-1] * (omega[] / omega[-1] - 1) * omega[]) -
+		beta * phi_2 * E[][(omega[1] * C_A[1] ^ (-sigma_C) / P_A[1]) * 
+			(omega[1] / omega[] - 1) * omega[1] ^ 2 / omega[] ^ 2] = 0;
+
+		# Demand for K_A
+		K_A[-1] = P_A[] * alpha_A * Y_A[] / r_A[];
+
+		# Demand for L_A
+		L_A[] = P_A[] * (1 - alpha_A) * Y_A[] / w_A[];
+
+		# Production of A
+		Y_A[] = Z_A[] * K_A[-1] ^ alpha_A * L_A[] ^ (1 - alpha_A);
+
+		# Price of A
+		P_A[]  = (1 / Z_A[]) * (r_A[] / alpha_A) ^ alpha_A * (w_A[] / (1 - alpha_A)) ^ (1 - alpha_A);
+
+		# Market Clearing A
+		Y_A[] = C_A[] + I_A[];
+
+		# Demand for K_B
+		K_B[-1] = P_B[] * alpha_B * Y_B[] / r_B[];
+		
+		# Demand for L_B
+		L_B[] = P_B[] * (1 - alpha_B) * Y_B[] / w_B[];
+
+		# Production of B
+		Y_B[] = Z_B[] * K_B[-1] ^ alpha_B * L_B[] ^ (1 - alpha_B);
+
+		# Price of B
+		P_B[] = 1 / Z_B[] * (r_B[] / alpha_B) ^ alpha_B * (w_B[] / (1 - alpha_B)) ^ (1 - alpha_B);
+
+		# Market Clearing B
+		Y_B[] = C_B[] + I_B[];
+
+		# Technology A
+		log(Z_A[]) = rho_ZA * log(Z_A[-1]) + epsilon_ZA[] + epsilon_Z[];
+
+		# Technology B
+		log(Z_B[]) = rho_ZB * log(Z_B[-1]) + epsilon_ZB[] + epsilon_Z[];
+	};
+
+	shocks
+	{
+		epsilon_Z[], epsilon_ZA[], epsilon_ZB[];
+	};
+
+	calibration
+	{
+		beta = 0.99;
+		delta = 0.035;
+		sigma_C = 1.5;
+		sigma_L = 2.0;
+		Theta = 1;
+
+		phi_1 = 0.76;
+		phi_2 = 1.25;
+		psi_omega = 0.5;
+
+		alpha_A = 0.33;
+		alpha_B = 0.33;
+
+		rho_ZA = 0.95;
+		rho_ZB = 0.95;
+	};
+};

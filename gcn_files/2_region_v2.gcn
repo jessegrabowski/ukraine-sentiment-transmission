@@ -1,14 +1,11 @@
+
 assumptions
 {
-
 	positive
 	{
-		Theta, alpha, alpha_C, beta, delta, eta_p, gamma_I, gamma_R, gamma_Y, gamma_pi,
-		phi_H, phi_pi_obj, pi_star, psi_C, psi_p, rho_pi_dot, rho_preference, 
-		rho_technology, sigma_C, sigma_L,
-		r[], pi[], P_A[], P_B[], P_A_star[], P_B_star[], P_nu_A[], P_nu_B[], r_G[], w[], Y[], Y_A[], Y_B[],
-		Y_f_A[], Y_f_B[], L_A[], L_B[], L_d_A[], L_d_B[], K_A[], K_B[], K_d_A[], K_d_B[], L[], K[]
-		;
+		Theta, alpha, alpha_C, alpha_K, alpha_L,  beta, delta, eta_p, gamma_I, gamma_R, gamma_Y, gamma_pi,
+		phi_H, pi_star, psi_C, psi_p, psi_L, psi_K, rho_preference, 
+		rho_technology, rho_interest, sigma_C, sigma_L;
 	};	
 };
 
@@ -16,25 +13,18 @@ block STEADY_STATE
 {
 	definitions
 	{
-		gamma = (alpha_C ^ (1 / psi_C)  + 
-		   (1 - alpha_C) ^ (1 / psi_C)) ^ (-psi_C / (psi_C - 1));
-
-		chi = P_nu_A[ss] * mc_A[ss] + P_nu_B[ss] * mc_B[ss];
-
-#		w = (omega[ss] * w_A[ss] + (1 - omega[ss]) * w_B[ss]);
+		gamma = (alpha_C ^ (1 / psi_C) + (1 - alpha_C) ^ (1 / psi_C)) ^ (-psi_C / (psi_C - 1));
 	};
 
 	identities
 	{
 		shock_preference[ss] = 1;
-		shock_preference[ss] = 1;
 		shock_technology[ss] = 1;
-		pi_obj[ss] = phi_pi_obj;
+		shock_interest[ss] = 1;
 		pi[ss] = pi_star;
-	
-		P_A[ss] = (alpha_C + (1 - alpha_C) * ((1 - alpha_C) / alpha_C) ^ ((1 - psi_C) / psi_C)) ^ (-1 / (1 - psi_C));
-		P_B[ss] = ((1 - alpha_C) / alpha_C) ^ (1 / psi_C) * P_A[ss];
-	
+		P_A[ss] = (alpha_C + (1 - alpha_C) * ((1 - alpha_C) / alpha_C) ^ ((1 - psi_C) / psi_C)) ^ (-1 / (1 - psi_C)) ;
+		P_B[ss] = (alpha / (1 - alpha)) ^ (-1 / psi_C) * P_A[ss];
+		
 		P_A_star[ss] = ((1 - eta_p * pi[ss] ^ (1 / psi_p)) / (1 - eta_p)) ^ psi_p * P_A[ss];
 		P_B_star[ss] = ((1 - eta_p * pi[ss] ^ (1 / psi_p)) / (1 - eta_p)) ^ psi_p * P_B[ss];
 		
@@ -45,37 +35,52 @@ block STEADY_STATE
 
 		r_G[ss] = pi[ss] / beta;
 		r[ss] = 1 / beta - (1 - delta);
+		r_A[ss] = (alpha_K + (1 - alpha_K) * (alpha_K / (1 - alpha_K)) ^ ((1 - psi_K) / psi_K)) ^ (-1 / (1 - psi_K))
+					 * r[ss];
+		r_B[ss] = (alpha_K / (1 - alpha_K)) ^ ((1 - psi_K) / psi_K) * r_A[ss] ^ (1 - psi_K);
 				
 		mc_A[ss] = (1 - beta * eta_p * pi[ss] ^ ((1 + psi_p) / psi_p)) / 
 				   (1 + psi_p) / (1 - beta * eta_p * pi[ss] ^ (1 / psi_p)) * P_A_star[ss];
 		mc_B[ss] = (1 - beta * eta_p * pi[ss] ^ ((1 + psi_p) / psi_p)) / 
 				   (1 + psi_p) / (1 - beta * eta_p * pi[ss] ^ (1 / psi_p)) * P_B_star[ss];
 				   
-		w_A[ss] = (1 - alpha) * mc_A[ss] ^ (1 / (1 - alpha)) * 
-					(alpha / r[ss]) ^ (alpha / (1 - alpha));		
-		w_B[ss] = (1 - alpha) * mc_B[ss] ^ (1 / (1 - alpha)) * 
-					(alpha / r[ss]) ^ (alpha / (1 - alpha));
-		w[ss] = alpha_L * w_A[ss] ^ (1 - psi_L) + (1 - alpha_L) * w_B[ss] ^ (1 - psi_L);
-		
-		Y[ss] = (r[ss] * (w[] ^ (1 + sigma_L) / (Theta * 
-				(chi * gamma * (1 - alpha)) ^ sigma_L)) ^ (1 / sigma_C)
-				/ (r[ss] - alpha * delta * chi * gamma)) ^ (sigma_C / (sigma_C + sigma_L));
+#		w_A[ss] = (1 - alpha) * mc_A[ss] ^ (1 / (1 - alpha)) * 
+#					(alpha / r_A[ss]) ^ (alpha / (1 - alpha));
+#		w_B[ss] = (1 - alpha) * mc_B[ss] ^ (1 / (1 - alpha)) *
+#					(alpha / r_B[ss]) ^ (alpha / (1 - alpha));
 
+		w[ss] = (alpha_L * 
+					((1 - alpha) * mc_A[ss] ^ (1 / (1 - alpha)) * (alpha / r_A[ss]) ^ (alpha / (1 - alpha))) ^ (1 - psi_L) +
+				(1 - alpha_L) * 
+					((1 - alpha) * mc_B[ss] ^ (1 / (1 - alpha)) * (alpha / r_B[ss]) ^ (alpha / (1 - alpha))) ^ (1 - psi_L)
+				) ^ (1 / (1 - psi_L));
+
+		w_A[ss] = (alpha_L + (1 - alpha_L) * (alpha_L / (1 - alpha_L)) ^ ((1 - psi_L) / psi_L)) ^ (-1 / (1 - psi_L))
+					 * w[ss]; 
+		w_B[ss] = (alpha_L / (1 - alpha_L)) ^ ((1 - psi_L) / psi_L) * w_A[ss] ^ (1 - psi_L);
+
+		Y[ss] = (r[ss] / (r[ss] - 2 * delta * alpha * gamma * mc_A[ss] * P_nu_A[ss])) ^ 
+					(sigma_C / (sigma_L + sigma_C)) * 
+		    Theta ^ (-1 / (sigma_L + sigma_C)) *
+			w[ss] ^ ((1 + sigma_L) / (sigma_L + sigma_C)) *
+			(2 * (1 - alpha) * mc_A[ss] * P_nu_A[ss] * gamma) ^ (-sigma_L / (sigma_L + sigma_C));
+		
 		Y_A[ss] = gamma * Y[ss];
 		Y_B[ss] = gamma * Y[ss];
 		
 		Y_f_A[ss] = Y_A[ss] * P_nu_A[ss];
 		Y_f_B[ss] = Y_B[ss] * P_nu_B[ss];
 		
-		K_d_A[ss] = alpha * mc_A[ss] * Y_f_A[ss] / r[ss];
+		K_A[ss] = alpha * mc_A[ss] * Y_f_A[ss] / r_A[ss];
 		L_A[ss] = (1 - alpha) * mc_A[ss] * Y_f_A[ss] / w_A[ss];
-		K_d_B[ss] = alpha * mc_B[ss] * Y_f_B[ss] / r[ss];
+		K_B[ss] = alpha * mc_B[ss] * Y_f_B[ss] / r_B[ss];
 		L_B[ss] = (1 - alpha) * mc_B[ss] * Y_f_B[ss] / w_B[ss];
-		K[ss] = K_d_A[ss] + K_d_B[ss];
-		L[ss] = (alpha_L ^ (1 / psi_L) * L_A[ss] ^ ((psi_L - 1) / psi_L) + 
-			(1 - alpha_L)^ (1 / psi_L) * L_B[ss] ^ ((psi_L - 1) / psi_L)) ^
-				(psi_L / (psi_L - 1));
-
+		K[ss] = (alpha_K ^ (1 / psi_K) * K_A[ss] ^ ((psi_K - 1) / psi_K) +
+		   (1 - alpha_K) ^ (1 / psi_K) * K_B[ss] ^ ((psi_K - 1) / psi_K))
+					 ^ (psi_K / (psi_K - 1));
+		L[ss] = (alpha_L ^ (1 / psi_L) * L_A[ss] ^ ((psi_L - 1) / psi_L) +
+		   (1 - alpha_L) ^ (1 / psi_K) * L_B[ss] ^ ((psi_L - 1) / psi_L))
+					 ^ (psi_L / (psi_L - 1));
 		I[ss] = delta * K[ss];
 		C[ss] = Y[ss] - I[ss];
 		
@@ -89,13 +94,18 @@ block STEADY_STATE
 		LHS_A[ss] = (1 + psi_p) * RHS_A[ss];
 		LHS_B[ss] = (1 + psi_p) * RHS_B[ss];
 		
-		TC_A[ss] = -(r[ss] * K_d_A[ss] + w_A[ss] * L_A[ss]);
-		TC_B[ss] = -(r[ss] * K_d_B[ss] + w_B[ss] * L_B[ss]);
+		TC_A[ss] = -(r_A[ss] * K_A[ss] + w_B[ss] * L_A[ss]);
+		TC_B[ss] = -(r_B[ss] * K_B[ss] + w_B[ss] * L_B[ss]);
 		TC_Y[ss] = -(P_A[ss] * Y_A[ss] + P_B[ss] * Y_B[ss]);
-		
-		Div_A[ss] = Y_A[ss] + TC_A[ss];
-		Div_B[ss] = Y_B[ss] + TC_B[ss];
+		TC_K[ss] = -(r_A[ss] * K_A[ss] + r_B[ss] * K_B[ss]);	
+		TC_L[ss] = -(w_A[ss] * L_A[ss] + w_B[ss] * L_B[ss]);
+
+		Div_A[ss] = P_A[ss] * Y_A[ss] + TC_A[ss];
+		Div_B[ss] = P_B[ss] * Y_B[ss] + TC_B[ss];
 		Div_Y[ss] = Y[ss] + TC_Y[ss];
+		Div_L[ss] = w[ss] * L[ss] + TC_L[ss];
+		Div_K[ss] = r[ss] * K[ss] + TC_K[ss];		
+
 		
 		Div[ss] = Div_A[ss] + Div_B[ss] + Div_Y[ss];
 		U[ss] = 1 / (1 - beta) * (C[ss] ^ (1 - sigma_C) / (1 - sigma_C) - 
@@ -111,15 +121,13 @@ block HOUSEHOLD
     {
         u[] = shock_preference[] * (
 				C[] ^ (1 - sigma_C) / (1 - sigma_C) -
-				Theta * L[] ^ (1 + sigma_L) / (1 + sigma_L));
+			    Theta * L[] ^ (1 + sigma_L) / (1 + sigma_L));
 
-	#	Phi[] = phi_1 / 2  * (omega[] / psi_omega - 1) ^ 2 + 
-	#		   (phi_2 / 2) * (omega[] / omega[-1] - 1) ^ 2 * omega[];
-    
-	};
+		S[] = 1 - gamma_I / 2 * (I[] / I[-1] - 1) ^2;
+    };
     controls
     {
-		C[], I[], K[], B[], L[]; 
+		C[], I[], K[], B[], L[];
     };
 
     objective
@@ -131,15 +139,13 @@ block HOUSEHOLD
     {
         C[] + I[] + B[] / r_G[]  =
 			  r[] * K[-1] +
-			  L[] * w[] +
+			  w[] * L[] +
 			  B[-1] / pi[] +
 			  Div[] : lambda[];
 
-		K[] = (1 - delta) * K[-1] +
-			I[] * (1 - gamma_I / 2 * (I[] / I[-1] - 1) ^ 2) : q[];
-		
+		K[] = (1 - delta) * K_A[-1] + I[] * S[] : q[]; 
     };
-	
+
     calibration
     {
         delta = 0.025;
@@ -150,6 +156,7 @@ block HOUSEHOLD
         sigma_L = 1.5;
 
 		gamma_I = 10;
+		phi_H = 0.5;
     };
 };
 
@@ -171,38 +178,6 @@ block PREFERENCE_SHOCKS
 	};
 };
 
-
-block JOB_MARKET
-{
-
-	controls
-	{
-		L_A[], L_B[];
-	};
-
-	objective
-	{
-		TC_L[] = -(w_A[] * L_A[] + w_B[] * L_B[]);
-	};
-	
-	constraints
-	{
-		L[] = (alpha_L ^ (1 / psi_L) * L_A[] ^ ((psi_L - 1) / psi_L) +
-		 (1 - alpha_L) ^ (1 / psi_L) * L_B[] ^ ((psi_L - 1) / psi_L)) ^
-				(psi_L / (psi_L - 1)): w[];
-	};
-
-	identities
-	{
-		Div_L[] = w[] * L[] + TC_L[];
-	};
-
-	calibration
-	{
-		alpha_L = 0.5;
-		psi_L = 0.22;
-	};
-};
 
 block HOME_CONSUMPTION_PRODUCTION
 {
@@ -232,26 +207,87 @@ block HOME_CONSUMPTION_PRODUCTION
 	calibration
 	{
 		alpha_C = 0.5; 
-		psi_C = 2.7;
+		psi_C = 0.7;
 	};	
 };
 
+block CAPITAL_BUNDLER
+{
+	controls
+	{
+		K_A[-1], K_B[-1];
+	};
+
+	objective
+	{
+		TC_K[] = -(r_A[] * K_A[-1] + r_B[] * K_B[-1]);
+	};
+
+	constraints
+	{
+		K[] = (alpha_K ^ (1 / psi_K) * K_A[-1] ^ ((psi_K - 1) / psi_K) + 
+				(1 - alpha_K) ^ (1 / psi_K) * K_B[-1] ^ ((psi_K - 1) / psi_K)) ^
+					(psi_K / (psi_K - 1)) : r[];
+	};
+
+	identities
+	{
+		Div_K[] = r[] * K[] - TC_K[]
+	};
+
+	calibration
+	{
+		alpha_K = 0.5;
+		psi_K = 0.22;
+	};
+};
+
+block LABOR_BUNDLER
+{
+	controls
+	{
+		L_A[], L_B[];
+	};
+
+	objective
+	{
+		TC_L[] = -(w_A[] * L_A[] + w_B[] * L_B[]);
+	};
+
+	constraints
+	{
+         L[] = (alpha_L ^ (1 / psi_L) * L_A[] ^ ((psi_L - 1) / psi_L) +
+					(1 - alpha_L) ^ (1 / psi_L) * L_B[-1] ^ ((psi_L - 1) / psi_L)) ^
+					(psi_L / (psi_L - 1)) : w[];
+	};
+
+	identities
+	{	
+		Div_L[] = w[] * L[] - TC_L[]; 
+	};
+
+	calibration
+	{
+		alpha_L = 0.5;
+		psi_L = 0.22;
+	};
+};
 
 block FIRM_A
 {
     controls
     {
-        K_d_A[], L_A[];
+        K_A[-1], L_A[];
     };
 
     objective
     {
-        TC_A[] = -(L_A[] * w_A[] + K_d_A[] * r[]);
+        TC_A[] = -(L_A[] * w_A[] + K_A[-1] * r_A[]);
     };
 
     constraints
     {
-        Y_f_A[] = shock_technology[] * K_d_A[] ^ alpha *
+        Y_f_A[] = shock_technology[] * K_A[-1] ^ alpha *
 					L_A[] ^ (1 - alpha) :  mc_A[];
     };
 
@@ -315,17 +351,17 @@ block FIRM_B
 {
     controls
     {
-        K_d_B[], L_B[];
+        K_B[-1], L_B[];
     };
 
     objective
     {
-        TC_B[] = -(L_B[] * w_B[] + K_d_B[] * r[]);
+        TC_B[] = -(L_B[] * w_B[] + K_B[-1] * r_B[]);
     };
 
     constraints
     {
-        Y_f_B[] = shock_technology[] * K_d_B[] ^ alpha *
+        Y_f_B[] = shock_technology[] * K_B[-1] ^ alpha *
 					L_B[] ^ (1 - alpha) :  mc_B[];
     };
 
@@ -333,11 +369,6 @@ block FIRM_B
 	{
 		Div_B[] = Y_B[] + TC_B[];
 	};
-
-    calibration
-    {
-        alpha  = 0.35;
-    };
 };
 
 block FIRM_B_PRICE_SETTING_PROBLEM
@@ -357,7 +388,7 @@ block FIRM_B_PRICE_SETTING_PROBLEM
 
 	calibration
 	{
-		psi_p   = 2.6;
+		psi_p   = 0.6;
 		eta_p   = 0.75;
 	};
 };
@@ -406,41 +437,30 @@ block MONETARY_POLICY
 {
 	identities
 	{
-		log(r_G[] / r_G[ss]) = gamma_R * log(r_G[-1] / r_G[ss]) +
-			(1 - gamma_R) * log(pi_obj[]) +
-			(1 - gamma_R) * gamma_pi * log(pi[] / pi_star - log(pi_obj[])) +
-			(1 - gamma_R) * gamma_Y * log(Y[] / Y[-1]) +
-			epsilon_R[];
-
-		log(pi_obj[]) = (1 - rho_pi_dot) * log(phi_pi_obj) +
-			rho_pi_dot * log(pi_obj[-1]) + epsilon_pi[];
+		r_G[] / r_G[ss] = (pi[] / pi_star) ^ phi_pi * (Y[] / Y[ss]) * shock_interest[];
+		log(shock_interest[]) = rho_interest * log(shock_interest[-1]) + epsilon_interest[];
 	};
-
+	
 	shocks
 	{
-		epsilon_R[], epsilon_pi[];
+		epsilon_interest[];
 	};
-
-
+	
 	calibration
 	{
-		gamma_R = 0.9;
-		gamma_pi = 1.5;
-		gamma_Y = 0.05;
-		phi_pi_obj = 1.0;
 		pi_star = 1.005;
-		rho_pi_dot	= 0.924;
+		phi_pi  = 10;
+		phi_Y	= 0.5;
+		rho_interest = 0.5;
 	};
 };
-
 
 
 block EQUILIBRIUM
 {
     identities
     {
-		K[-1] = K_d_A[] + K_d_B[];
-		Div[] = Div_A[] + Div_B[] + Div_Y[] + Div_L[];
+		Div[] = Div_A[] + Div_B[] + Div_Y[];
 		B[] = 0;
     };
 };
