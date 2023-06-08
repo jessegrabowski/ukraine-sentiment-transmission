@@ -10,8 +10,8 @@ block HOUSEHOLD
 				L_B[] ^ (1 + sigma_L) / (1 + sigma_L);
 
 		
-		income[] = omega[] * (r_A[] * K_A[-1] + w_A[] * L_A[] + Div_A_i[] + Div_A[]) + 
-				   (1 - omega[]) * (r_B[] * K_B[-1] + w_B[] * L_B[] + Div_B_i[] + Div_B[]);
+		income[] = omega[] * (r_A[] * K_A[-1] + w_A[] * L_A[] + Div_A[]) + Div_A_i[] +
+				(1 - omega[]) * (r_B[] * K_B[-1] + w_B[] * L_B[] + Div_B[]) + Div_B_i[];
  
 		Phi[] = (psi_1 / 2 * (omega[] / psi_omega - 1) ^ 2 +
 				 psi_2 / 2 * (omega[] / omega[-1] - 1) ^ 2 * omega[]);
@@ -31,7 +31,7 @@ block HOUSEHOLD
 	constraints
 	{
 		omega[] * P_A[] * (C_A[] + I_A[]) + (1 - omega[]) * P_B[] * (C_B[] + I_B[])
-			 = income[] - Phi[]: lambda[];
+			 = income[]: lambda[];
 
 		K_A[] = (1 - delta) * K_A[-1] + I_A[]: q_A[];
 		K_B[] = (1 - delta) * K_B[-1] + I_B[]: q_B[];
@@ -46,9 +46,6 @@ block HOUSEHOLD
 		psi_1 = 0.7;
 		psi_2 = 1.2;
 		psi_omega = 0.5;
-
-		alpha_C = 0.5;
-		psi_C = 0.6;
 	};
 };
 
@@ -114,6 +111,37 @@ block HOME_PRODUCTION_REGION_B
 	};
 };
 
+block EQULIBRIUM
+{
+	objective
+	{
+		TC_Y[] = -(P_A[] * Y_A[] + P_B[] * Y_B[]);
+	};
+
+	controls
+	{
+		Y_A[], Y_B[];
+	};	
+
+	constraints
+	{
+		Y[] = (alpha_Y ^ (1 / psi_Y) * Y_A[] ^ ((psi_Y - 1) / psi_Y) + 
+			(1 - alpha_Y) ^(1 / psi_Y) * Y_B[] ^ ((psi_Y - 1) / psi_Y)) ^
+				(psi_Y / (psi_Y - 1)): P[];
+	};
+
+	identities
+	{
+		Div_Y[] = P[] * Y[] + TC_Y[];
+		P[] = 1;
+	};
+
+	calibration
+	{
+		alpha_Y = 0.5;
+		psi_Y = 0.33;
+	};
+};
 
 block FIRM_A
 {
@@ -135,8 +163,8 @@ block FIRM_A
 	identities
 	{
 		log(Z_A[]) = rho_ZA * log(Z_A[-1]) + epsilon_ZA[];
-		Div_A_i[] = Y_A_i[] * P_A_i[] + TC_A_i[];
-		Y_A_i[] = Y_AA[] + Y_BA[];
+		Div_A_i[] = Y_A_i[] * P_A_i[] + omega[] * TC_A_i[];
+		Y_A_i[] = omega[] * Y_AA[] + (1 - omega[]) * Y_BA[];
 	};
 
 	shocks
@@ -171,8 +199,8 @@ block FIRM_B
 	identities
 	{
 		log(Z_B[]) = rho_ZB * log(Z_B[-1]) + epsilon_ZB[];
-		Div_B_i[] = Y_B_i[] * P_B[] + TC_B_i[];
-		Y_B_i[] = Y_AB[] + Y_BB[];
+		Div_B_i[] = Y_B_i[] * P_B_i[] + (1 - omega[]) * TC_B_i[];
+		Y_B_i[] = omega[] * Y_AB[] + (1 - omega[]) * Y_BB[];
 	};
 
 	shocks
